@@ -11,25 +11,6 @@ all_cards = ['As','2s','3s','4s','5s','6s','7s','8s','9s','Ts','Js','Qs','Ks',
 	     'Ah','2h','3h','4h','5h','6h','7h','8h','9h','Th','Jh','Qh','Kh',
 	     'Ad','2d','3d','4d','5d','6d','7d','8d','9d','Td','Jd','Qd','Kd']
 
-all_spades = [i for i in all_cards if i.endswith('s')]
-all_clubs = [i for i in all_cards if i.endswith('c')]
-all_hearts = [i for i in all_cards if i.endswith('h')] 
-all_diamonds = [i for i in all_cards if i.endswith('d')]
-
-all_aces = [i for i in all_cards if i.startswith('A')]
-al_twos = [i for i in all_cards if i.startswith('2')]
-all_threes = [i for i in all_cards if i.startswith('3')]
-all_fours = [i for i in all_cards if i.startswith('4')]
-all_fives = [i for i in all_cards if i.startswith('5')]
-all_sixes = [i for i in all_cards if i.startswith('6')]
-all_sevens = [i for i in all_cards if i.startswith('7')]
-all_eights = [i for i in all_cards if i.startswith('8')]
-all_nines = [i for i in all_cards if i.startswith('9')]
-all_tens = [i for i in all_cards if i.startswith('T')]
-all_jacks = [i for i in all_cards if i.startswith('J')]
-all_queens = [i for i in all_cards if i.startswith('Q')]
-all_kings = [i for i in all_cards if i.startswith('K')]
-
 which_street = input('\nexample: "ten of spades, jack of diamonds, queen of hearts" = TsJdQh\nwhich cards are on the board already? (press enter if none)  ')
 number_of_opponents = int(input('\nhow many opponents are there? (must be > 0) '))
 know_opponent_cards = input('\ndo you know your opponents\' cards?(yes/no)  ')
@@ -117,7 +98,7 @@ possible_straights = [['A','2','3','4','5'],
 
 def is_straight(hand):
 	hand_numbers = list(hand[::2])
-	straight_info = pd.Series(index=['is','rank','subrank','microrank','minirank'])
+	straight_info = pd.Series(index=['is','rank','subrank','microrank','minirank','tinyrank','supersmallrank'])
 	for possible_straight in possible_straights:
 		if set(possible_straight).issubset(set(hand_numbers)):
 			straight_info['is'] = True
@@ -132,7 +113,7 @@ def is_straight(hand):
 	return straight_info
 
 def is_flush(hand):
-	flush_info = pd.Series(index=['is','rank','subrank','microrank','minirank','suit'])
+	flush_info = pd.Series(index=['is','rank','subrank','microrank','minirank','tinyrank','supersmallrank','suit'])
 	hand_suits = ''.join(map(str, hand[1::2]))
 	grouped_suits = [list(group) for key, group in groupby(sorted(hand))]
 	for suit_group in grouped_suits:
@@ -153,7 +134,7 @@ def is_flush(hand):
 	return flush_info
 					
 def is_straight_flush(hand):
-	SF_info = pd.Series(index=['is','rank','subrank','microrank','minirank','suit'])
+	SF_info = pd.Series(index=['is','rank','subrank','microrank','minirank','tinyrank','supersmallrank','suit'])
 	straight = is_straight(hand)
 	flush = is_flush(hand)
 	hand_suits = list(hand[1::2])
@@ -175,7 +156,7 @@ def is_straight_flush(hand):
 	return SF_info
 
 def is_full_house(hand):
-	FH_info = pd.Series(index=['is','rank','subrank','microrank','minirank'])
+	FH_info = pd.Series(index=['is','rank','subrank','microrank','minirank','tinyrank','supersmallrank'])
 	hand_numbers = ''.join(map(str, hand[::2]))
 	grouped_numbers = [list(group) for key, group in groupby(sorted(hand_numbers))]
 	three_group = False
@@ -208,7 +189,7 @@ def is_full_house(hand):
 	return FH_info
 
 def is_quads(hand):
-	Q_info = pd.Series(index=['is','rank','subrank','microrank','minirank'])
+	Q_info = pd.Series(index=['is','rank','subrank','microrank','minirank','tinyrank','supersmallrank'])
 	hand_numbers = ''.join(map(str, hand[::2]))
 	grouped_numbers = [list(group) for key, group in groupby(sorted(hand_numbers))]
 	for group in grouped_numbers:
@@ -227,7 +208,7 @@ def is_quads(hand):
 	return Q_info
 
 def is_set(hand):
-	set_info = pd.Series(index=['is','rank','subrank','microrank','minirank'])
+	set_info = pd.Series(index=['is','rank','subrank','microrank','minirank','tinyrank','supersmallrank'])
 	hand_numbers = ''.join(map(str, hand[::2]))
 	grouped_numbers = [list(group) for key, group in groupby(sorted(hand_numbers))]
 	for group in grouped_numbers:
@@ -246,7 +227,7 @@ def is_set(hand):
 	return set_info
 
 def is_two_pair(hand):
-	TP_info = pd.Series(index=['is','rank','subrank','microrank','minirank'])
+	TP_info = pd.Series(index=['is','rank','subrank','microrank','minirank', 'tinyrank', 'supersmallrank'])
 	hand_numbers = ''.join(map(str, hand[::2]))
 	grouped_numbers = [list(group) for key, group in groupby(sorted(hand_numbers))]
 	pair_group = []
@@ -292,7 +273,7 @@ def is_two_pair(hand):
 	return TP_info
 
 def is_pair(hand):
-	pair_info = pd.Series(index=['is','rank','subrank','microrank','minirank'])
+	pair_info = pd.Series(index=['is','rank','subrank','microrank','minirank', 'tinyrank', 'supersmallrank'])
 	hand_numbers = ''.join(map(str, hand[::2]))
 	grouped_numbers = [list(group) for key, group in groupby(sorted(hand_numbers))]
 	pair_group = []
@@ -314,19 +295,44 @@ def is_pair(hand):
 							pair_info['subrank'] = rank
 							top_pair = pair
 		grouped_numbers.remove(top_pair)
+		top_kicker = ''
 		for group in grouped_numbers:
 			for rank, card in card_rankings.items():
 				if card == group[0]:
 					if pd.isna(pair_info['microrank']):
 						pair_info['microrank'] = rank
+						top_kicker = card
 					else:
 						if rank < pair_info['microrank']:
 							pair_info['microrank'] = rank
+							top_kicker = card
+		grouped_numbers.remove(list(str(top_kicker)))
+		second_kicker = ''
+		for group in grouped_numbers:
+			for rank, card in card_rankings.items():
+				if card == group[0]:
+					if pd.isna(pair_info['minirank']):
+						pair_info['minirank'] = rank
+						second_kicker = group[0]
+					else:
+						if rank < pair_info['minirank']:
+							pair_info['minirank'] = rank
+							second_kicker = group[0]
+		grouped_numbers.remove(list(str(second_kicker)))
+		for group in grouped_numbers:
+			for rank, card in card_rankings.items():
+				if card == group[0]:
+					if pd.isna(pair_info['tinyrank']):
+						pair_info['tinyrank'] = rank
+					else:
+						if rank < pair_info['tinyrank']:
+							pair_info['tinyrank'] = rank
 	return pair_info
 
 def is_high_card(hand):
-	HC_info = pd.Series(index=['is','rank','subrank','microrank','minirank'])
+	HC_info = pd.Series(index=['is','rank','subrank','microrank','minirank', 'tinyrank', 'supersmallrank'])
 	hand_numbers = ''.join(map(str, hand[::2]))
+	grouped_numbers = [list(group) for key, group in groupby(sorted(hand_numbers))]
 	SF = is_straight_flush(hand)
 	Q = is_quads(hand)
 	FH = is_full_house(hand)
@@ -337,14 +343,58 @@ def is_high_card(hand):
 	if pd.isna(SF['is'] and Q['is'] and FH['is'] and Flush['is'] and Straight['is'] and TP['is'] and Pairs['is']):
 		HC_info['is'] = True
 		HC_info['rank'] = 9
+		top_card = ''
 		for number in hand_numbers:
 			for rank, card in card_rankings.items():
 				if card == number:
 					if pd.isna(HC_info['subrank']):
 						HC_info['subrank'] = rank
+						top_card = number
 					else:
 						if rank < HC_info['subrank']:
 							HC_info['subrank'] = rank
+							top_card = number
+		grouped_numbers.remove(list(str(top_card)))
+		top_kicker = ''
+		for group in grouped_numbers:
+			for rank, card in card_rankings.items():
+				if card == group[0]:
+					HC_info['microrank'] = rank
+					top_kicker = group[0]
+				else:
+					if rank < HC_info['microrank']:
+						HC_info['microrank'] = rank
+						top_kicker = group[0]
+		grouped_numbers.remove(list(str(top_kicker)))
+		second_kicker = ''
+		for group in grouped_numbers:
+			for rank, card in card_rankings.items():
+				if card == group[0]:
+					HC_info['minirank'] = rank
+					second_kicker = group[0]
+				else:
+					if rank < HC_info['minirank']:
+						HC_info['minirank'] = rank
+						second_kicker = group[0]
+		grouped_numbers.remove(list(str(second_kicker)))
+		third_kicker = ''
+		for group in grouped_numbers:
+			for rank, card in card_rankings.items():
+				if card == group[0]:
+					HC_info['tinyrank'] = rank
+					third_kicker = group[0]
+				else:
+					if rank < HC_info['tinyrank']:
+						HC_info['tinyrank'] = rank
+						third_kicker = group[0]
+		grouped_numbers.remove(list(str(third_kicker)))
+		for group in grouped_numbers:
+			for rank, card in card_rankings.items():
+				if card == group[0]:
+					HC_info['supersmallrank'] = rank
+				else:
+					if rank < HC_info['supersmallrank']:
+						HC_info['supersmallrank'] = rank
 	return HC_info
 
 board_and_opponents_list = []
@@ -424,6 +474,8 @@ def sim(hand_list):
 				subrank = hand_id['subrank']
 				microrank = hand_id['microrank']
 				minirank = hand_id['minirank']
+				tinyrank = hand_id['tinyrank']
+				supersmallrank = hand_id['supersmallrank']
 				continue
 			else:
 				if hand_id['rank'] < rank:
@@ -458,13 +510,49 @@ def sim(hand_list):
 													subrank = hand_id['subrank']
 													microrank = hand_id['microrank']
 													minirank = hand_id['minirank']
-											else:
-												winner = np.nan
-												print(f'no minirank...winner is {winner}')
-												rank = np.nan
-												subrank = np.nan
-												microrank = np.nan
-												minirank = np.nan
+											else: 
+												if hand_id['minirank'] == minirank:
+													if not pd.isna(hand_id['tinyrank']):
+														if hand_id['tinyrank'] < tinyrank:
+															winner = player
+															rank = hand_id['rank']
+															subrank = hand_id['subrank']
+															microrank = hand_id['microrank']
+															minirank = hand_id['minirank']
+															tinyrank = hand_id['tinyrank']
+															supersmallrank = hand_id['supersmallrank']
+														else:
+															if hand_id['tinyrank'] == tinyrank:
+																if not pd.isna(hand_id['supersmallrank']):
+																	if hand_id['supersmallrank'] < supersmallrank:
+																		winner = player
+																		rank = hand_id['rank']
+																		subrank = hand_id['subrank']
+																		microrank = hand_id['microrank']
+																		minirank = hand_id['minirank']
+																		tinyrank = hand_id['tinyrank']
+																		supersmallrank = hand_id['supersmallrank']
+																else:
+																	winner = np.nan
+																	print(f'no supersmallrank...winner is {winner}')
+																	rank = np.nan
+																	subrank = np.nan
+																	microrank = np.nan
+																	minirank = np.nan
+													else:
+														winner = np.nan
+														print(f'no tinyrank...winner is {winner}')
+														rank = np.nan
+														subrank = np.nan
+														microrank = np.nan
+														minirank = np.nan
+												else:
+													winner = np.nan
+													print(f'no minirank...winner is {winner}')
+													rank = np.nan
+													subrank = np.nan
+													microrank = np.nan
+													minirank = np.nan
 								else:
 									winner = np.nan
 									print(f'no microrank...winner is {winner}')
