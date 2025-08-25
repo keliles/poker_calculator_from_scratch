@@ -104,12 +104,9 @@ def is_straight(hand):
 			straight_info['is'] = True
 			straight_info['rank'] = 5
 			for rank, card in card_rankings.items():
-				if card == possible_straight[0]:
+				if card == possible_straight[4]:
 					if pd.isna(straight_info['subrank']):
 						straight_info['subrank'] = rank
-					else:
-						if rank < straight_info['subrank']:
-							straight_info['subrank'] = rank
 	return straight_info
 
 def is_flush(hand):
@@ -359,42 +356,46 @@ def is_high_card(hand):
 		for group in grouped_numbers:
 			for rank, card in card_rankings.items():
 				if card == group[0]:
-					HC_info['microrank'] = rank
-					top_kicker = group[0]
-				else:
-					if rank < HC_info['microrank']:
+					if pd.isna(HC_info['microrank']):
 						HC_info['microrank'] = rank
 						top_kicker = group[0]
+					else:
+						if rank < HC_info['microrank']:
+							HC_info['microrank'] = rank
+							top_kicker = group[0]
 		grouped_numbers.remove(list(str(top_kicker)))
 		second_kicker = ''
 		for group in grouped_numbers:
 			for rank, card in card_rankings.items():
 				if card == group[0]:
-					HC_info['minirank'] = rank
-					second_kicker = group[0]
-				else:
-					if rank < HC_info['minirank']:
+					if pd.isna(HC_info['minirank']):
 						HC_info['minirank'] = rank
 						second_kicker = group[0]
+					else:
+						if rank < HC_info['minirank']:
+							HC_info['minirank'] = rank
+							second_kicker = group[0]
 		grouped_numbers.remove(list(str(second_kicker)))
 		third_kicker = ''
 		for group in grouped_numbers:
 			for rank, card in card_rankings.items():
 				if card == group[0]:
-					HC_info['tinyrank'] = rank
-					third_kicker = group[0]
-				else:
-					if rank < HC_info['tinyrank']:
+					if pd.isna(HC_info['tinyrank']):
 						HC_info['tinyrank'] = rank
 						third_kicker = group[0]
+					else:
+						if rank < HC_info['tinyrank']:
+							HC_info['tinyrank'] = rank
+							third_kicker = group[0]
 		grouped_numbers.remove(list(str(third_kicker)))
 		for group in grouped_numbers:
 			for rank, card in card_rankings.items():
 				if card == group[0]:
-					HC_info['supersmallrank'] = rank
-				else:
-					if rank < HC_info['supersmallrank']:
+					if pd.isna(HC_info['supersmallrank']):
 						HC_info['supersmallrank'] = rank
+					else:
+						if rank < HC_info['supersmallrank']:
+							HC_info['supersmallrank'] = rank
 	return HC_info
 
 board_and_opponents_list = []
@@ -408,6 +409,7 @@ for opponent_hand in board_and_opponents_list:
 def sim(hand_list):
 	remaining_streets = 7 - (int(len(hand_list[0])) / 2)
 	sim_count = 0
+	tie_count = 0
 	win_tally = pd.Series()
 	for player in range(len(hand_list)):
 		win_tally[str(player)] = 0
@@ -560,13 +562,15 @@ def sim(hand_list):
 									subrank = np.nan
 									microrank = np.nan
 									minirank = np.nan
+				if pd.isna(winner):
+					tie_count += 1
 				if not pd.isna(winner):
 					if round_counter == threshold:
 							win_tally[winner] += 1
 							sim_count += 1
 				round_counter += 1
-			print(f'\nwinner: {winner}')
-			print(f'their hand:\n{hand_id}\n:')
+			print(f'\nwinner: {winner}\n\n')
+	sim_count += tie_count
 	win_percentages = win_tally / sim_count
 	win_percentages['tie'] = 1 - win_percentages.sum()
 	return win_percentages
