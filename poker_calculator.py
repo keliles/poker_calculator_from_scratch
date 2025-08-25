@@ -120,14 +120,63 @@ def is_flush(hand):
 			flush_info['suit'] = suit_group[0]
 	if not pd.isna(flush_info['is']):
 		hand_numbers = set(list(hand[::2]))
+		grouped_numbers = [list(group) for key, group in groupby(sorted(hand_numbers))]
+		top_card = ''
 		for number in hand_numbers:
 			for rank, card in card_rankings.items():
 				if card == number:
 					if pd.isna(flush_info['subrank']):
 						flush_info['subrank'] = rank
+						top_card = number
 					else:
 						if rank < flush_info['subrank']:
 							flush_info['subrank'] = rank
+							top_card = number
+		grouped_numbers.remove(list(str(top_card)))
+		top_kicker = ''
+		for group in grouped_numbers:
+			for rank, card in card_rankings.items():
+				if card == group[0]:
+					if pd.isna(flush_info['microrank']):
+						flush_info['microrank'] = rank
+						top_kicker = group[0]
+					else:
+						if rank < flush_info['microrank']:
+							flush_info['microrank'] = rank
+							top_kicker = group[0]
+		grouped_numbers.remove(list(str(top_kicker)))
+		second_kicker = ''
+		for group in grouped_numbers:
+			for rank, card in card_rankings.items():
+				if card == group[0]:
+					if pd.isna(flush_info['minirank']):
+						flush_info['minirank'] = rank
+						second_kicker = group[0]
+					else:
+						if rank < flush_info['minirank']:
+							flush_info['minirank'] = rank
+							second_kicker = group[0]
+		grouped_numbers.remove(list(str(second_kicker)))
+		third_kicker = ''
+		for group in grouped_numbers:
+			for rank, card in card_rankings.items():
+				if card == group[0]:
+					if pd.isna(flush_info['tinyrank']):
+						flush_info['tinyrank'] = rank
+						third_kicker = group[0]
+					else:
+						if rank < flush_info['tinyrank']:
+							flush_info['tinyrank'] = rank
+							third_kicker = group[0]
+		grouped_numbers.remove(list(str(third_kicker)))
+		for group in grouped_numbers:
+			for rank, card in card_rankings.items():
+				if card == group[0]:
+					if pd.isna(flush_info['supersmallrank']):
+						flush_info['supersmallrank'] = rank
+					else:
+						if rank < flush_info['supersmallrank']:
+							flush_info['supersmallrank'] = rank
 	return flush_info
 					
 def is_straight_flush(hand):
@@ -208,19 +257,49 @@ def is_set(hand):
 	set_info = pd.Series(index=['is','rank','subrank','microrank','minirank','tinyrank','supersmallrank'])
 	hand_numbers = ''.join(map(str, hand[::2]))
 	grouped_numbers = [list(group) for key, group in groupby(sorted(hand_numbers))]
+	the_set = ''
+	set_group = []
 	for group in grouped_numbers:
 		if len(group) == 3:
 			set_info['is'] = True
 			set_info['rank'] = 6
-			for number in hand_numbers:
-				if number != group[0]:
-					for rank, card in card_rankings.items():
-						if card == number:
-							if pd.isna(set_info['subrank']):
-								set_info['subrank'] = rank
-							else:
-								if rank < set_info['subrank']:
-									set_info['subrank'] = rank
+			set_group.append(group)
+	print(f'set group: {set_group}')
+	for set_cards in set_group:
+		for rank, card in card_rankings.items():
+			if card == set_cards[0]:
+				if pd.isna(set_info['subrank']):
+					set_info['subrank'] = rank
+					the_set = set_cards
+				else:
+					if rank < set_info['subrank']:
+						set_info['subrank'] = rank
+						the_set = set_cards
+	if len(set_group) > 0:
+		grouped_numbers.remove(the_set)
+		top_nonset_card = []
+		for group in grouped_numbers:
+			for rank, card in card_rankings.items():
+				if card == group[0]:
+					if pd.isna(set_info['microrank']):
+						set_info['microrank'] = rank
+						top_nonset_card = list(group)
+					else:
+						if rank < set_info['microrank']:
+							set_info['microrank'] = rank
+							top_nonset_card = list(group)
+							print(f'microrank = {set_info["microrank"]}')
+		print(f'top nonset card: {top_nonset_card}')
+		grouped_numbers.remove(top_nonset_card)
+		for group in grouped_numbers:
+			for rank, card in card_rankings.items():
+				if card == group[0]:
+					if pd.isna(set_info['minirank']):
+						set_info['minirank'] = rank
+					else:
+						if rank < set_info['minirank']:
+							set_info['minirank'] = rank
+							print(f'minirank = {set_info["minirank"]}')
 	return set_info
 
 def is_two_pair(hand):
