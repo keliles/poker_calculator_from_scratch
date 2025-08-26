@@ -205,28 +205,38 @@ def is_full_house(hand):
 	FH_info = pd.Series(index=['is','rank','subrank','microrank','minirank','tinyrank','supersmallrank'])
 	hand_numbers = ''.join(map(str, hand[::2]))
 	grouped_numbers = [list(group) for key, group in groupby(sorted(hand_numbers))]
-	three_group = False
-	two_group = False
+	first_group = False
+	second_group = False
+	the_first_group = []
+	FH_groups = []
 	for group in grouped_numbers:
-		if len(group) == 2:
-			two_group = True
-			for rank, card in card_rankings.items():
-				if card == group[0]:
-					if pd.isna(FH_info['microrank']):
-						FH_info['microrank'] = rank
-					else:
-						if rank < FH_info['microrank']:
-							FH_info['microrank'] = rank
-		if len(group) == 3:
-			three_group = True
+		if len(group) > 2:
+			first_group = True
 			for rank, card in card_rankings.items():
 				if card == group[0]:
 					if pd.isna(FH_info['subrank']):
 						FH_info['subrank'] = rank
+						FH_groups.append(group)
+						the_first_group = list(group)
 					else:
 						if rank < FH_info['subrank']:
 							FH_info['subrank'] = rank
-	if three_group and two_group:
+							FH_groups.append(group)
+							the_first_group = list(group)
+	if len(FH_groups) > 0:
+		grouped_numbers.remove(the_first_group)
+	for group in grouped_numbers:
+		if len(group) >= 2:
+			second_group = True
+			for rank, card in card_rankings.items():
+				if card == group[0]:
+					if pd.isna(FH_info['microrank']):
+						FH_info['microrank'] = rank
+						
+					else:
+						if rank < FH_info['microrank']:
+							FH_info['microrank'] = rank
+	if first_group and second_group:
 		FH_info['is'] = True
 		FH_info['rank'] = 3
 	else:
@@ -264,7 +274,6 @@ def is_set(hand):
 			set_info['is'] = True
 			set_info['rank'] = 6
 			set_group.append(group)
-	print(f'set group: {set_group}')
 	for set_cards in set_group:
 		for rank, card in card_rankings.items():
 			if card == set_cards[0]:
@@ -288,8 +297,6 @@ def is_set(hand):
 						if rank < set_info['microrank']:
 							set_info['microrank'] = rank
 							top_nonset_card = list(group)
-							print(f'microrank = {set_info["microrank"]}')
-		print(f'top nonset card: {top_nonset_card}')
 		grouped_numbers.remove(top_nonset_card)
 		for group in grouped_numbers:
 			for rank, card in card_rankings.items():
@@ -299,7 +306,6 @@ def is_set(hand):
 					else:
 						if rank < set_info['minirank']:
 							set_info['minirank'] = rank
-							print(f'minirank = {set_info["minirank"]}')
 	return set_info
 
 def is_two_pair(hand):
@@ -498,51 +504,41 @@ def sim(hand_list):
 		for hand in hand_list:
 			hand_id = np.nan
 			sim_hand = hand + (''.join(map(str,list(combo))))
-			print(f'\nhand to be ranked: {sim_hand}\n')
 			Straight_Flush = is_straight_flush(sim_hand)
 			if not np.isnan(Straight_Flush['is']):
 				hand_id = Straight_Flush
-				print(f'player #{current_hand} has a straight flush!')
 			else:
 				Quads = is_quads(sim_hand)
 				if not np.isnan(Quads['is']):
 					hand_id = Quads
-					print(f'player #{current_hand} has quads!')
 				else:
 					Full_House = is_full_house(sim_hand)
 					if not np.isnan(Full_House['is']):
 						hand_id = Full_House
-						print(f'player #{current_hand} has a full house!')
 					else:
 						Flush = is_flush(sim_hand)
 						if not np.isnan(Flush['is']):
 							hand_id = Flush
-							print(f'player #{current_hand} has a flush!')
 						else:
 							Straight = is_straight(sim_hand)
 							if not np.isnan(Straight['is']):
 								hand_id = Straight
-								print(f'player #{current_hand} has a straight!')
 							else:
 								Set = is_set(sim_hand)
 								if not np.isnan(Set['is']):
 									hand_id = Set
-									print(f'player #{current_hand} has a set!')
 								else:
 									Two_Pair = is_two_pair(sim_hand)
 									if not np.isnan(Two_Pair['is']):
 										hand_id = Two_Pair
-										print(f'player #{current_hand} has two pair!')
 									else:
 										Pair = is_pair(sim_hand)
 										if not np.isnan(Pair['is']):
 											hand_id = Pair
-											print(f'player #{current_hand} has a pair!')
 										else:
 											High_Card = is_high_card(sim_hand)
 											if not np.isnan(High_Card['is']):
 												hand_id = High_Card
-												print(f'player #{current_hand} has a high card!')
 			hand_bank[f'{current_hand}'] = hand_id
 			current_hand += 1
 		winner = np.nan
@@ -615,28 +611,24 @@ def sim(hand_list):
 																		supersmallrank = hand_id['supersmallrank']
 																else:
 																	winner = np.nan
-																	print(f'no supersmallrank...winner is {winner}')
 																	rank = np.nan
 																	subrank = np.nan
 																	microrank = np.nan
 																	minirank = np.nan
 													else:
 														winner = np.nan
-														print(f'no tinyrank...winner is {winner}')
 														rank = np.nan
 														subrank = np.nan
 														microrank = np.nan
 														minirank = np.nan
 												else:
 													winner = np.nan
-													print(f'no minirank...winner is {winner}')
 													rank = np.nan
 													subrank = np.nan
 													microrank = np.nan
 													minirank = np.nan
 								else:
 									winner = np.nan
-									print(f'no microrank...winner is {winner}')
 									rank = np.nan
 									subrank = np.nan
 									microrank = np.nan
@@ -648,7 +640,6 @@ def sim(hand_list):
 							win_tally[winner] += 1
 							sim_count += 1
 				round_counter += 1
-			print(f'\nwinner: {winner}\n\n')
 	sim_count += tie_count
 	win_percentages = win_tally / sim_count
 	win_percentages['tie'] = 1 - win_percentages.sum()
