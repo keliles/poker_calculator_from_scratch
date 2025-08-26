@@ -56,3 +56,6 @@ $ tie:     0.00000
   5. Best 5-card hand is determined for each player
   6. Outcome of the simulated hand is stored
   7. Winning percentages are calculated and presented to the user
+
+## License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
