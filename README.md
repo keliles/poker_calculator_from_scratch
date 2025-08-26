@@ -8,6 +8,9 @@ Given hole cards and community cards, it simulates possible outcomes and estimat
 The implementation is built from scratch in Python using only numpy, pandas, and itertools.
 It incudes hand ranking logic, probability calculations, and tie resolution — without relying on poker-specific libraries.
 
+Entering post-fop hands with less than 4 players is the best use case since >3 players means ties between different players begin to occur and
+the script doesn't handle those individually...yet.
+
 ## Features 😎
 
 1. Accurate hand evaluation (pairs → straight flush) with subranking and further for tie resolution.
